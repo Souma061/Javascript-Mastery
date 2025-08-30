@@ -1,0 +1,114 @@
+/* Cool Weather App Styles */
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%);
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.weather-card {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px 30px 30px 30px;
+  border-radius: 25px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  text-align: center;
+  width: 370px;
+  position: relative;
+  overflow: hidden;
+}
+
+.weather-card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+  border-radius: 50%;
+  opacity: 0.25;
+}
+
+.weather-card h1 {
+  font-size: 2.1em;
+  margin-bottom: 18px;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.input-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+input {
+  padding: 12px;
+  width: 70%;
+  border: 1px solid #b2bec3;
+  border-radius: 8px 0 0 8px;
+  font-size: 1.1em;
+  outline: none;
+  transition: border 0.2s;
+}
+
+input:focus {
+  border: 1.5px solid #66a6ff;
+}
+
+button {
+  padding: 12px 18px;
+  font-size: 1.1em;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: linear-gradient(90deg, #66a6ff 0%, #89f7fe 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  font-weight: 600;
+}
+
+button:hover {
+  background: linear-gradient(90deg, #89f7fe 0%, #66a6ff 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+#weatherResult {
+  margin-top: 25px;
+  font-size: 1.2em;
+  color: #222;
+}
+
+.temp {
+  font-size: 2.7em;
+  font-weight: bold;
+  margin-top: 12px;
+  color: #007cf0;
+  text-shadow: 0 2px 8px #b6fbff;
+}
+
+.condition-icon {
+  font-size: 2.5em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+#cityName {
+  font-weight: 600;
+  color: #222;
+  font-size: 1.1em;
+}
+
+@media (max-width: 500px) {
+  .weather-card {
+    width: 95vw;
+    padding: 25px 5vw;
+  }
+
+  input {
+    width: 60%;
+  }
+}

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quiz Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @keyframes flash {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.35;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* Hide options collapsed by 50/50 lifeline */
+    #quiz-screen #options .option-hidden {
+      display: none;
+    }
+
+    .flash {
+      animation: flash 1s steps(2, end) infinite;
+    }
+
+    /* Floating score feedback */
+    @keyframes scoreFloat {
+      from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translate(var(--float-dx, -50%), var(--float-dy, -28px));
+        opacity: 0;
+      }
+    }
+
+    .score-float {
+      position: fixed;
+      z-index: 2000;
+      font-weight: 700;
+      color: #198754;
+      /* success */
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      pointer-events: none;
+      animation: scoreFloat var(--float-duration, 900ms) ease-out forwards;
+      will-change: transform, opacity;
+      font-size: 1.1rem;
+    }
+
+    /* Mobile-first tuning */
+    :root {
+      --card-radius: 14px;
+      --touch-min: 44px;
+      /* Minimum recommended touch target */
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      padding: 12px;
+    }
+
+    .container {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 0;
+      min-height: 100dvh;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      border-radius: var(--card-radius);
+    }
+
+    .container>.card {
+      width: 100%;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 1rem + 2vw, 2rem);
+    }
+
+    h2 {
+      font-size: clamp(1.2rem, 0.95rem + 1.5vw, 1.6rem);
+    }
+
+    h4 {
+      font-size: clamp(1rem, 0.9rem + 0.8vw, 1.2rem);
+    }
+
+
+    button,
+    .btn {
+      min-height: var(--touch-min);
+      font-size: 1rem;
+    }
+
+    #options .list-group-item {
+      padding: 12px 14px;
+      font-size: clamp(1rem, 0.95rem + 0.4vw, 1.1rem);
+    }
+
+
+    .progress {
+      height: 8px;
+    }
+
+
+    #quiz-screen .mb-3 {
+      margin-bottom: 0.9rem;
+    }
+
+    #quiz-screen .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+
+    #timer {
+      margin-bottom: 0.4rem;
+    }
+
+    /* Input group spacing */
+    #result-screen .input-group>.form-control {
+      min-height: var(--touch-min);
+    }
+
+    #save-score-btn {
+      min-width: 84px;
+    }
+
+
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+      }
+    }
+
+
+    #quiz-screen #options .list-group-item-success {
+      background-color: #198754;
+      /* Bootstrap green-600 */
+      border-color: #146c43;
+      color: #ffffff;
+    }
+
+    #quiz-screen #options .list-group-item-danger {
+      background-color: #dc3545;
+      /* Bootstrap red-600 */
+      border-color: #bb2d3b;
+      color: #ffffff;
+    }
+
+    /* Keep visibility when disabled after answering */
+    #quiz-screen #options button:disabled {
+      opacity: 1;
+    }
+
+    /* Theme-aware page background */
+    :root[data-bs-theme="light"] body,
+    body:not([data-bs-theme]) {
+      /* subtle light gradient */
+      background: linear-gradient(180deg, #f8f9fa 0%, #eef1f4 100%);
+    }
+
+    :root[data-bs-theme="dark"] body,
+    body.theme-dark {
+      /* subtle dark gradient */
+      background: linear-gradient(180deg, #0e1117 0%, #161b22 100%);
+    }
+
+    /* Theme-aware variables for toggle */
+    :root[data-bs-theme="light"] {
+      --toggle-bg: rgba(255, 255, 255, 0.9);
+      --toggle-fg: #212529;
+      --toggle-border: rgba(0, 0, 0, 0.1);
+      --toggle-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    :root[data-bs-theme="dark"] {
+      --toggle-bg: rgba(33, 37, 41, 0.85);
+      --toggle-fg: #f8f9fa;
+      --toggle-border: rgba(255, 255, 255, 0.15);
+      --toggle-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Pill-shaped theme toggle styling */
+    #themeToggle {
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid var(--toggle-border);
+      background: var(--toggle-bg);
+      color: var(--toggle-fg);
+      box-shadow: var(--toggle-shadow);
+      backdrop-filter: saturate(180%) blur(8px);
+      -webkit-backdrop-filter: saturate(180%) blur(8px);
+      transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .06s ease;
+    }
+
+    #themeToggle:hover {
+      transform: translateY(-1px);
+    }
+
+    #themeToggle:active {
+      transform: translateY(0);
+    }
+
+    #themeToggle:focus {
+      outline: 0;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
+    }
+
+    #themeToggle::before {
+      display: inline-block;
+      margin-right: 6px;
+      content: "🌙";
+    }
+
+    :root[data-bs-theme="dark"] #themeToggle::before {
+      content: "☀️";
+    }
+
+    /* Focus-visible ring for accessibility */
+    .btn:focus-visible,
+    #options .list-group-item:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 0.22rem rgba(13, 110, 253, .35);
+    }
+
+    /* Responsive container widths on larger screens */
+    @media (min-width: 576px) {
+      .container {
+        max-width: 520px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        max-width: 640px;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .flash {
+        animation: none;
+      }
+
+      .score-float {
+        animation: none;
+        opacity: 1;
+      }
+
+      #timer-bar {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container py-5">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="card shadow p-4">
+      <h1 class="text-center mb-4">🎯 Quiz Game</h1>
+
+      <div class="mb-3">
+        <label for="category" class="form-label">Choose Category</label>
+        <select id="category" class="form-select">
+          <option value="9">General Knowledge</option>
+          <option value="18">Computer Science</option>
+          <option value="21">Sports</option>
+          <option value="23">History</option>
+          <option value="17">Science & Nature</option>
+        </select>
+        <button id="random-category-btn" type="button" class="btn btn-sm btn-outline-secondary mt-2">Surprise me
+          🎲</button>
+      </div>
+
+      <div class="mb-3">
+        <label for="difficulty" class="form-label">Choose Difficulty</label>
+        <select id="difficulty" class="form-select">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="amount" class="form-label">Number of Questions</label>
+        <select id="amount" class="form-select">
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20" selected>20</option>
+        </select>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button id="start-btn" class="btn btn-primary w-100">Start Quiz</button>
+        <button id="view-leaderboard-btn" class="btn btn-outline-secondary w-100">View Leaderboards</button>
+      </div>
+    </div>
+
+    <!-- Leaderboard Screen (from Start) -->
+    <div id="leaderboard-screen" class="card shadow p-4 d-none">
+      <h2 class="mb-3">🏆 Leaderboards</h2>
+      <h5>Universal</h5>
+      <ul id="leaderboard-main" class="list-group mb-3"></ul>
+      <button id="clear-leaderboard-main-btn" class="btn btn-outline-danger w-100 mb-3">Clear
+        Leaderboard</button>
+
+      <h5>🏷️ Category: <span id="lb-main-category-label">—</span></h5>
+      <ul id="category-leaderboard-main" class="list-group mb-3"></ul>
+      <button id="clear-category-leaderboard-main-btn" class="btn btn-outline-danger w-100 mb-4">Clear Category
+        Leaderboard</button>
+
+      <button id="back-to-start-btn" class="btn btn-secondary w-100">Back</button>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="card shadow p-4 d-none">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <small id="progress" class="text-muted" aria-live="polite"></small>
+        <span id="live-score" class="badge bg-info text-dark" role="status" aria-live="polite">Score: 0</span>
+      </div>
+      <div class="d-flex gap-2 mb-2">
+        <button id="lifeline-5050" type="button" class="btn btn-sm btn-outline-warning flex-fill">50/50</button>
+        <button id="lifeline-skip" type="button" class="btn btn-sm btn-outline-secondary flex-fill">Skip</button>
+      </div>
+      <small id="context-line" class="text-muted mb-2 d-block">
+        Category: <span id="ctx-category">—</span> • Difficulty: <span id="ctx-difficulty">—</span>
+      </small>
+      <div class="progress mb-3" style="height: 6px;">
+        <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuemin="0"
+          aria-valuemax="100"></div>
+      </div>
+      <h4 id="question" class="mb-3"></h4>
+      <div id="options" class="list-group mb-3"></div>
+      <p id="timer" class="fw-bold" aria-live="polite">Time left: 15s ⏳</p>
+      <div class="progress mb-3" style="height: 6px;">
+        <div id="timer-bar" class="progress-bar" role="progressbar"
+          style="width: 100%; background-color: #0d6efd; transition: width 1s linear;" aria-valuemin="0"
+          aria-valuemax="100"></div>
+      </div>
+      <button id="next-btn" class="btn btn-success w-100" disabled>Next</button>
+      <small class="text-muted mt-2">Tip: Press 1-4 to answer, Enter for Next</small>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="card shadow p-4 d-none">
+      <h2>Your Score: <span id="score"></span></h2>
+      <div class="input-group my-3">
+        <input type="text" id="username" class="form-control" placeholder="Enter your name" aria-label="Username"
+          autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false">
+        <button id="save-score-btn" class="btn btn-outline-primary" type="button">Save</button>
+      </div>
+      <h4>🏆 Leaderboard</h4>
+      <ul id="leaderboard" class="list-group mb-3"></ul>
+      <button id="clear-leaderboard-btn" class="btn btn-outline-danger w-100 mb-2">Clear Leaderboard</button>
+      <h5 class="mt-3">🏷️ Category Leaderboard: <span id="lb-category-label">—</span></h5>
+      <ul id="category-leaderboard" class="list-group mb-3"></ul>
+      <button id="clear-category-leaderboard-btn" class="btn btn-outline-danger w-100 mb-4">Clear Category
+        Leaderboard</button>
+      <button id="restart-btn" class="btn btn-secondary w-100">Play Again</button>
+      <hr class="my-4">
+      <h4>📝 Review</h4>
+      <div id="review" class="list-group"></div>
+    </div>
+
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none"
+    style="background: rgba(0,0,0,.28); backdrop-filter: blur(2px); z-index: 2000; display: grid; place-items: center;">
+    <div class="card shadow p-4" aria-live="polite" aria-busy="true">
+      <div class="d-flex align-items-center gap-3">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <div>
+          <div class="fw-semibold">Fetching questions…</div>
+          <div class="text-muted small">This may take a moment on slow networks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme toggle: fixed so it’s visible on all screens -->
+  <button id="themeToggle" class="position-fixed" style="top: 12px; right: 12px; z-index: 1050;"
+    aria-label="Toggle theme" aria-pressed="false">Dark</button>
+
+  <script src="quiz.js"></script>
+  <script src="ui.js"></script>
+  <script src="leaderboard.js"></script>
+</body>
+
+</html>
